@@ -54,21 +54,19 @@ debootstrap \
     die "debootstrap failed!"
 
 chroot ${XIXER_ROOT} /bin/bash << EOF
-set -e
+set -xe
+export DEBIAN_FRONTEND=noninteractive
 echo ${XIXER_HOSTNAME} > /etc/hostname
 chpasswd <<< "root:${XIXER_ROOT_PASSWORD}"
 mount -t tmpfs none /dev/shm
 rm -vf /etc/apt/sources.list /etc/apt/sources.list.d/*.list
-cat > /etc/apt/sources.list.d/security.list <<EOS
-deb  http://cloudfront.debian.net/debian-security  stable/updates  main contrib non-free
-deb  http://cloudfront.debian.net/debian-security  testing/updates main contrib non-free
-EOS
-for dist in stable testing unstable experimental; do
-  echo "deb  http://cloudfront.debian.net/debian ${dist} main contrib non-free" \
-    > /etc/apt/sources.list.d/${dist}.list
-  done
+cat > /etc/apt/sources.list <<EOF_SOURCES
+deb http://ftp.us.debian.org/debian/ stretch main contrib non-free
+deb http://security.debian.org/debian-security stretch/updates main contrib non-free
+deb http://ftp.us.debian.org/debian/ stretch-updates main contrib non-free
+EOF_SOURCES
 apt-get update
-apt-get install -y --no-install-recommends ${TARGET_PACKAGES}
+apt-get install --no-install-recommends -yq ${TARGET_PACKAGES[@]}
 apt-get clean
 umount /dev/shm
 rm -rf /var/lib/apt/lists/*
